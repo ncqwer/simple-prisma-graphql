@@ -109,18 +109,23 @@ export class GenerateService {
       flag = false;
     });
 
-    const promise = execCommand('yarn prisma generate', (type, message) => {
-      if (flag) {
-        stream.write({ type, message });
-        if (
-          type === 'error' &&
-          !/^Debugger attached/.test(message) &&
-          !/^Waiting for the debugger to disconnect/.test(message)
-        ) {
-          error = message;
+    let promise: Promise<any>;
+    if (process.env.SKIP_PRISMA_GENERATE && !content) {
+      promise = Promise.resolve();
+    } else {
+      promise = execCommand('yarn prisma generate', (type, message) => {
+        if (flag) {
+          stream.write({ type, message });
+          if (
+            type === 'error' &&
+            !/^Debugger attached/.test(message) &&
+            !/^Waiting for the debugger to disconnect/.test(message)
+          ) {
+            error = message;
+          }
         }
-      }
-    });
+      });
+    }
 
     promise
       .then(async () => {
